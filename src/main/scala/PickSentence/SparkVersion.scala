@@ -60,14 +60,13 @@ object SparkVersion {
     docIds.map(a => (a,score))
   }
 
-  def createNgramInvertedIndex(args :(Array[String], Long)) : IndexedSeq[(String, Long)] = {
+  def createNgramInvertedIndex(args :(Array[String], Long)) : Iterator[(String, Long)] = {
     val words = args._1
     val uuid = args._2
-    (3 to 5).flatMap(
-      i => words.sliding(i)
-                .filter(_.length==i)
+    words.sliding(3)
+                .filter(_.length==3)
                 .map(_.mkString(","))
-                .map(a =>(a,uuid))
+                .map(a =>(a,uuid)
     )
   }
 

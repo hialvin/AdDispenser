@@ -2,7 +2,6 @@ package PickSentence
 
 import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.spark.{SparkConf, SparkContext}
-import scala.collection.mutable.ListBuffer
 
 object SparkVersion {
 
@@ -26,7 +25,7 @@ object SparkVersion {
       sentenceIndex.saveAsTextFile(args(1))
     }
 
-    val NgramIndex = sentenceIndex.repartition(100)
+    val NgramIndex = sentenceIndex.repartition(50)
       .map{case(k,v) => (k.split("""\W+"""), v)}
       .flatMap(createNgramInvertedIndex)
       .aggregateByKey(List[Any]())(
@@ -43,44 +42,33 @@ object SparkVersion {
       joinCount.saveAsTextFile(args(3))
     }
 
-    joinCount.flatMap(getScore)
+    joinCount.flatMap(mergeScore)
       .reduceByKey(_+_)
       .saveAsTextFile(args(4))
 
   }
-  def createNgramInvertedIndex(args :(Array[String], Long)) : List[(String, Long)] = {
-    val words = args._1
-    val uuid = args._2
-    var res = ListBuffer[(String,Long)]()
-    for (i <- 3 to 5) {
-      val arr = new Array[String](i)
-      for (j <- 0 to words.length - i) {
-        for (k <- j until j + i) {
-          arr(k - j) = words(k)
-        }
-        val ngram = arr.mkString(" ")
-        val temp = (ngram, args._2)
-        res += temp
-      }
+
+  def mergeScore(args: (String, (String, List[Any]))): List[(Any, Double)] = {
+    var score : Double = 0
+    val ngramCount = args._2._1
+    val docIds = args._2._2
+    try {
+      score = 1.0 / ngramCount.toInt
+    } catch {
+      case _ : Exception =>  score = 0
     }
-    res.toList
+    docIds.map(a => (a,score))
   }
 
-  def getScore(args: (String,(String,List[Any]))): List[(Any,Double)] ={
-    val ngram = args._1
-    val count = args._2._1
-    var score : Double = 0
-    try {
-      score = 1.0 / count.toInt
-    } catch {
-      case _: Exception => 0
-    }
-    val sentenceList = args._2._2
-    var res = ListBuffer[(Any,Double)]()
-    for (sentence <- sentenceList) {
-      val tmp = (sentence, score)
-      res += tmp
-    }
-    res.toList
+  def createNgramInvertedIndex(args :(Array[String], Long)) : IndexedSeq[(String, Long)] = {
+    val words = args._1
+    val uuid = args._2
+    (3 to 5).flatMap(
+      i => words.sliding(i)
+                .filter(_.length==i)
+                .map(_.mkString(","))
+                .map(a =>(a,uuid))
+    )
   }
+
 }

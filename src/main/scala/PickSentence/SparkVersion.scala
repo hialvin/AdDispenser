@@ -1,9 +1,13 @@
 package PickSentence
 
-import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.hadoop.io.{IntWritable, Text}
+import scala.collection.mutable
 
 object SparkVersion {
+
+  val REGION_NUMBER = 50
+  val TASK_NUMBER = 1000
 
   def main(args: Array[String]): Unit = {
     if (args.length < 2) {
@@ -18,37 +22,35 @@ object SparkVersion {
     val conf = new SparkConf().setAppName("calculate sentence score")
     val sc = new SparkContext(conf)
     val in = sc.textFile(args(0))
-    val sentenceIndex = in.flatMap(_.split("\\.+")).
-      map(_.trim).filter(x => x != null && x.length > 10)
-      .zipWithUniqueId
-    if (!args(1).equals("skip")){
-      sentenceIndex.saveAsTextFile(args(1))
-    }
-
-    val NgramIndex = sentenceIndex.repartition(50)
+    val sentenceIndex = in.map(_.split(","))
+      .map(a => (a(0),a(1).toLong))
+    val NgramIndex = sentenceIndex.repartition(TASK_NUMBER)
       .map{case(k,v) => (k.split("""\W+"""), v)}
       .flatMap(createNgramInvertedIndex)
-      .aggregateByKey(List[Any]())(
-        (aggr, value) => aggr ::: (value :: Nil),
-        (aggr1, aggr2) => aggr1 ::: aggr2
+      .aggregateByKey(new mutable.HashSet[Long]())(
+        (aggr, value) => aggr += value ,
+        (aggr1, aggr2) => aggr1 ++= aggr2
       )
 
-    val ngramCount = sc.sequenceFile(args(2),classOf[Text],classOf[IntWritable])
+    val ngramCount = sc.sequenceFile(args(1),classOf[Text],classOf[IntWritable])
       .map{case(k,v) => (k.toString, v.toString)}
       .filter(k => k._1.matches("[a-zA-z\\s]+"))
 
-    val joinCount = ngramCount.join(NgramIndex)
+    val joinCountSentence = ngramCount.join(NgramIndex)
     if (!args(3).equals("skip")) {
-      joinCount.saveAsTextFile(args(3))
+      joinCountSentence.saveAsTextFile(args(3))
     }
 
-    joinCount.flatMap(mergeScore)
+
+    joinCountSentence.flatMap(mergeScore)
       .reduceByKey(_+_)
       .saveAsTextFile(args(4))
 
   }
 
-  def mergeScore(args: (String, (String, List[Any]))): List[(Any, Double)] = {
+
+
+  def mergeScore(args: (String, (String, mutable.HashSet[Long]))): mutable.HashSet[(Long, Double)] = {
     var score : Double = 0
     val ngramCount = args._2._1
     val docIds = args._2._2
@@ -60,13 +62,14 @@ object SparkVersion {
     docIds.map(a => (a,score))
   }
 
-  def createNgramInvertedIndex(args :(Array[String], Long)) : Iterator[(String, Long)] = {
+  def createNgramInvertedIndex(args :(Array[String], Long)) : IndexedSeq[(String, Long)] = {
     val words = args._1
     val uuid = args._2
-    words.sliding(3)
-                .filter(_.length==3)
-                .map(_.mkString(","))
-                .map(a =>(a,uuid)
+    (2 to 5).flatMap(
+      i => words.sliding(i)
+        .filter(_.length==i)
+        .map(_.mkString(","))
+        .map(a =>(a,uuid))
     )
   }
 

@@ -37,10 +37,16 @@ object SparkVersion {
       .filter(k => k._1.matches("[a-zA-z\\s]+"))
 
     val joinCountSentence = ngramCount.join(NgramIndex)
+
+    joinCountSentence.flatMap(createCandidatesAndSentece)
+      .aggregateByKey(new mutable.HashSet[(String, String, mutable.HashSet[Long])]())(
+        (aggr, value) => aggr += value ,
+        (aggr1, aggr2) => aggr1 ++= aggr2
+      )
+
     if (!args(3).equals("skip")) {
       joinCountSentence.saveAsTextFile(args(3))
     }
-
 
     joinCountSentence.flatMap(mergeScore)
       .reduceByKey(_+_)
@@ -48,7 +54,22 @@ object SparkVersion {
 
   }
 
-
+  def createCandidatesAndSentece(args: (String, (String, mutable.HashSet[Long]))): IndexedSeq[(String, (String, String, mutable.HashSet[Long]))] = {
+    val ngram = args._1
+    val count = args._2._1
+    val sIds = args._2._2
+    val ngramArray = ngram.split("\\s+")
+    val keyLen = ngramArray.length
+    (0 until keyLen).map(
+      i => {
+        val tmp = ngramArray.clone()
+        val candidates = tmp(i)
+        tmp(i) = "_"
+        val queryKey = tmp.mkString(",")
+        ((queryKey),(candidates, count, sIds))
+      }
+    )
+  }
 
   def mergeScore(args: (String, (String, mutable.HashSet[Long]))): mutable.HashSet[(Long, Double)] = {
     var score : Double = 0

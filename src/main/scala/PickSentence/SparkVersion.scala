@@ -31,14 +31,17 @@ object SparkVersion {
         (aggr, value) => aggr += value ,
         (aggr1, aggr2) => aggr1 ++= aggr2
       )
+    NgramIndex.saveAsTextFile(args(1))
 
-    val ngramCount = sc.sequenceFile(args(1),classOf[Text],classOf[IntWritable])
+    val ngramCount = sc.sequenceFile(args(2),classOf[Text],classOf[IntWritable])
       .map{case(k,v) => (k.toString, v.toString)}
       .filter(k => k._1.matches("[a-zA-z\\s]+"))
 
     val joinCountSentence = ngramCount.join(NgramIndex)
 
-    joinCountSentence.flatMap(createCandidatesAndSentece)
+    joinCountSentence
+      .repartition(TASK_NUMBER)
+      .flatMap(createCandidatesAndSentece)
       .aggregateByKey(new mutable.HashSet[(String, String, mutable.HashSet[Long])]())(
         (aggr, value) => aggr += value ,
         (aggr1, aggr2) => aggr1 ++= aggr2
@@ -48,7 +51,9 @@ object SparkVersion {
       joinCountSentence.saveAsTextFile(args(3))
     }
 
-    joinCountSentence.flatMap(mergeScore)
+    joinCountSentence
+      .repartition(TASK_NUMBER)
+      .flatMap(mergeScore)
       .reduceByKey(_+_)
       .saveAsTextFile(args(4))
 

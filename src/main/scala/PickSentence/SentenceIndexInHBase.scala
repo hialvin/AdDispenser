@@ -14,7 +14,7 @@ object SentenceIndexInHBase {
   val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-5,ip-10-0-0-13,ip-10-0-0-12," +
     "ip-10-0-0-11,ip-10-0-0-10,ip-10-0-0-8,ip-10-0-0-7,ip-10-0-0-4"
 
-  val HTABLE_NAME = "sentence_index"
+  val HTABLE_NAME = "sentence_index2"
 
   def main(args: Array[String]): Unit = {
     if (args.length < 3) {
@@ -24,7 +24,6 @@ object SentenceIndexInHBase {
       return
     }
     val conf = new SparkConf()
-      .setAppName("Sentence Index")
     val sc = new SparkContext(conf)
     val in = sc.textFile(args(0))
 

@@ -7,7 +7,8 @@ class SentencePartitioner(modulus: Int) extends Partitioner {
   val charsInSalt = digitsRequired(modulus)
 
   def getPartition(key: Any): Int = key match {
-    case key:String => key.substring(0,charsInSalt).toInt
+    case tup:(String, String, String) => tup._1.substring(0,charsInSalt).toInt
+//    case key:String => key.substring(0,charsInSalt).toInt
   }
 
   override def numPartitions: Int = modulus

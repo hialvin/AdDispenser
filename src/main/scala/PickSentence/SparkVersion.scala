@@ -16,10 +16,10 @@ import scala.collection.mutable
 object SparkVersion {
 
   val REGION_NUMBER = 98
-  val TASK_NUMBER = 8000
-  val NGRAM_COUNT_PARTITION = 500
-  val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-5,ip-10-0-0-13,ip-10-0-0-12," +
-    "ip-10-0-0-11,ip-10-0-0-10,ip-10-0-0-8,ip-10-0-0-7,ip-10-0-0-4"
+  val TASK_NUMBER = 1000 //
+  val NGRAM_COUNT_PARTITION = 512
+  val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-58,ip-10-0-0-46,ip-10-0-0-61,ip-10-0-0-37," +
+    "ip-10-0-0-52,ip-10-0-0-57,ip-10-0-0-55,ip-10-0-0-36,ip-10-0-0-49"
 
   def main(args: Array[String]): Unit = {
     if (args.length < 2) {
@@ -80,7 +80,7 @@ object SparkVersion {
     val table = new HTable(conf2, "word_candidate")
     PatchedHFileOutputFormat2.configureIncrementalLoad(job, table)
     val conf3 = job.getConfiguration // important(!)
-    partitionedRdd.saveAsNewAPIHadoopFile(
+    cells.saveAsNewAPIHadoopFile(
       args(3),
       classOf[ImmutableBytesWritable],
       classOf[KeyValue],
@@ -91,7 +91,7 @@ object SparkVersion {
     joinCountSentence
       .flatMap(mergeScore)
       .reduceByKey(_+_)
-      .coalesce(100)
+      .coalesce(256)
       .saveAsTextFile(args(4))
 
   }

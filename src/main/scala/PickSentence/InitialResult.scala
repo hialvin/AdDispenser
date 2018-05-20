@@ -7,7 +7,7 @@ import org.apache.hadoop.hbase.client.HTable
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.hadoop.io.{IntWritable, Text}
+import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.spark.storage.StorageLevel
 
@@ -16,10 +16,10 @@ import scala.collection.mutable
 object SparkVersion {
 
   val REGION_NUMBER = 98
-  val TASK_NUMBER = 1000 //
+  val TASK_NUMBER = 2000 //
   val NGRAM_COUNT_PARTITION = 512
-  val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-58,ip-10-0-0-46,ip-10-0-0-61,ip-10-0-0-37," +
-    "ip-10-0-0-52,ip-10-0-0-57,ip-10-0-0-55,ip-10-0-0-36,ip-10-0-0-49"
+  val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-52,ip-10-0-0-48,ip-10-0-0-54,ip-10-0-0-37," +
+    "ip-10-0-0-40,ip-10-0-0-55,ip-10-0-0-42,ip-10-0-0-56,ip-10-0-0-62"
 
   def main(args: Array[String]): Unit = {
     if (args.length < 2) {
@@ -47,7 +47,7 @@ object SparkVersion {
         (aggr1, aggr2) => aggr1 ++= aggr2
       ).persist(StorageLevel.MEMORY_AND_DISK_SER)
 
-    val ngramCount = sc.sequenceFile(args(2),classOf[Text],classOf[IntWritable])
+    val ngramCount = sc.sequenceFile(args(2),classOf[Text],classOf[LongWritable])
       .map{case(k,v) => (k.toString, v.toString)}
       .repartition(NGRAM_COUNT_PARTITION)
       .filter(k => k._1.matches("[a-zA-z\\s]+"))
@@ -55,7 +55,6 @@ object SparkVersion {
     val joinCountSentence = ngramCount.join(NgramIndex)
 
     val candidatesAndSentence = joinCountSentence
-      .repartition(TASK_NUMBER)
       .flatMap(createCandidatesAndSentece)
 
     val hbase_rdd = candidatesAndSentence.map(a => ((a._1, "a", a._2._1), a._2._2 + "," + a._2._3.mkString(",")))

@@ -36,7 +36,7 @@ object InitialResult {
         .map(_.split(",",2))
         .map(a => (a(1),a(0)))
 
-    val NgramIndex = sentenceIndex.repartition(args(1).toInt)
+    val NgramIndex = sentenceIndex.repartition(args(0).toInt)
       .map{case(k,v) => (k.split("""\W+"""), v)}
       .flatMap(createNgramInvertedIndex)
       .aggregateByKey(new mutable.HashSet[String]())(

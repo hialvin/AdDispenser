@@ -38,6 +38,7 @@ object InitialResult {
 
     val NgramIndex = sentenceIndex.repartition(args(0).toInt)
       .map{case(k,v) => (k.split("""\W+"""), v)}
+      .filter(k => k._1.length < 100)
       .flatMap(createNgramInvertedIndex)
       .aggregateByKey(new mutable.HashSet[String]())(
         (aggr, value) => aggr += value ,

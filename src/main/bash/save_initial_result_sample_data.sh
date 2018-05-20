@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 spark-submit \
---name "initial result sample data" \
+--name "initial result sample 400M data" \
 --master spark://ip-10-0-0-52.ec2.internal:7077 \
 --executor-memory 12G \
 --driver-memory 6G \
@@ -17,8 +17,8 @@ spark-submit \
 --jars $(echo /usr/local/hbase/lib/*.jar | tr ' ' ',') \
 ~/wordseeker_2.11-0.1.jar \
 200 \
-hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/CompleteSentenceIndex \
+hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/sample400MSentenceIndex \
 hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/ngram/3-gram/* \
-hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/SampleJoinCountSentenceToHbase \
-hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/SampleSentenceScore/
+hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/sample400MJoinCountSentenceToHbase \
+hdfs://ec2-18-205-44-23.compute-1.amazonaws.com:9000/sample400MSentenceScore/
 

@@ -11,11 +11,6 @@ import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.Job
 import scala.collection.mutable
 
-/**
-  * @author : Zhiyong (Alvin) Yang
-  *
-  */
-
 object InitialResult {
 
   val REGION_NUMBER = 98

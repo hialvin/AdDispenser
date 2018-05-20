@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 spark-submit \
---name "Main" \
+--name "inital result" \
 --master spark://ip-10-0-0-52.ec2.internal:7077 \
 --executor-memory 12G \
 --driver-memory 6G \

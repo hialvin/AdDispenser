@@ -9,14 +9,16 @@ import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.Job
-import org.apache.spark.storage.StorageLevel
-
 import scala.collection.mutable
 
-object SparkVersion {
+/**
+  * @author : Zhiyong (Alvin) Yang
+  *
+  */
+
+object InitialResult {
 
   val REGION_NUMBER = 98
-  val TASK_NUMBER = 2000 //
   val NGRAM_COUNT_PARTITION = 512
   val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-52,ip-10-0-0-48,ip-10-0-0-54,ip-10-0-0-37," +
     "ip-10-0-0-40,ip-10-0-0-55,ip-10-0-0-42,ip-10-0-0-56,ip-10-0-0-62"
@@ -25,7 +27,7 @@ object SparkVersion {
     if (args.length < 2) {
       println("usage: \n" +
         "(0) corpus input file location\n" +
-        "(1) sentence index output file\n" +
+        "(1) task number\n" +
         "(2) ngram input file location\n" +
         "(3) join test result\n" +
         "(4) sentence score output file\n")
@@ -33,19 +35,19 @@ object SparkVersion {
     }
     val conf = new SparkConf()
     val sc = new SparkContext(conf)
-    val in = sc.textFile(args(0))
+    val in = sc.textFile(args(1))
     val sentenceIndex = in
         .map(str => str.substring(1,str.length -1))
         .map(_.split(",",2))
         .map(a => (a(1),a(0)))
 
-    val NgramIndex = sentenceIndex.repartition(TASK_NUMBER)
+    val NgramIndex = sentenceIndex.repartition(args(1).toInt)
       .map{case(k,v) => (k.split("""\W+"""), v)}
       .flatMap(createNgramInvertedIndex)
       .aggregateByKey(new mutable.HashSet[String]())(
         (aggr, value) => aggr += value ,
         (aggr1, aggr2) => aggr1 ++= aggr2
-      ).persist(StorageLevel.MEMORY_AND_DISK_SER)
+      )
 
     val ngramCount = sc.sequenceFile(args(2),classOf[Text],classOf[LongWritable])
       .map{case(k,v) => (k.toString, v.toString)}
@@ -60,7 +62,7 @@ object SparkVersion {
     val hbase_rdd = candidatesAndSentence.map(a => ((a._1, "a", a._2._1), a._2._2 + "," + a._2._3.mkString(",")))
     val sortedRDD = hbase_rdd.map{ case (k, v)  => ((saltKey(k._1,REGION_NUMBER), k._2, k._3),v)}
     val partitionedRdd = sortedRDD
-      .repartitionAndSortWithinPartitions(new SentencePartitioner(REGION_NUMBER))
+      .repartitionAndSortWithinPartitions(new InitialResultHbasePartitioner(REGION_NUMBER))
 
     val cells = partitionedRdd.map(r => {
       val saltedRowKey = Bytes.toBytes(r._1._1)

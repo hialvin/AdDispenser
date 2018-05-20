@@ -11,10 +11,10 @@ import java.security.MessageDigest
 object SentenceIndexInHBase {
 
   val REGION_NUMBER = 70
-  val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-5,ip-10-0-0-13,ip-10-0-0-12," +
-    "ip-10-0-0-11,ip-10-0-0-10,ip-10-0-0-8,ip-10-0-0-7,ip-10-0-0-4"
+  val HBASE_ZOOKEEPER_QUORUM = "ip-10-0-0-52,ip-10-0-0-48,ip-10-0-0-54,ip-10-0-0-37," +
+    "ip-10-0-0-40,ip-10-0-0-55,ip-10-0-0-42,ip-10-0-0-56,ip-10-0-0-62"
 
-  val HTABLE_NAME = "sentence_index2"
+  val HTABLE_NAME = "sentence_index"
 
   def main(args: Array[String]): Unit = {
     if (args.length < 3) {

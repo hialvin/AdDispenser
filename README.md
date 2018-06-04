@@ -54,9 +54,10 @@ The general process involves:
 Credits: [Efficient bulk load of HBase using Spark — OpenCore](https://www.opencore.com/blog/2016/10/efficient-bulk-load-of-hbase-using-spark/)
 
 
-## Others
-***TODO***     
-Make changes to HBase schema to avoid range query completely.    
+## Others    
+***TODO***    
+Make changes to HBase schema to avoid range query completely.     
+
 Set up a redis cluster to help pick sentences which cover most queries, and filter out the sentences that only cover a small portion of queries.
 
 

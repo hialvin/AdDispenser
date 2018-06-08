@@ -5,9 +5,12 @@ Insight Data Engineering Project, Boston, April - June 2018
 ## Overview
 Word Seeker is a tool to give users word recommendations according to context. When the user want a word to describe ***sunshine***, it will give out such candidates, ***"bright sunshine", "warm sunshine", "brilliant sunshine"*** , etc. It could also help students learn english. For example, they want to find the right preposition to fill in the incomplete phrase   ***"different ___  them"*** , Word Seeker could supply them with a few candidates and their word frequency in a large corpus(see screenshot above). The more a candidate appears in a large corpus doesn't mean it is the right one, so example sentences are provided as references.
 ## Demo    
-website: http://www.alvin-yang.me/    
-slides: http://www.alvin-yang.me/slides/    
-youtube: //TODO    
+[slides](https://docs.google.com/presentation/d/1j3-TU6UDlFBQrg4THIBU_qYBkhpeu93tgMpBEUJdFdA/edit?usp=sharing)   
+[youtube](<https://youtu.be/Ob1x34q3eSM>)
+
+~~website: http://www.alvin-yang.me/~~    
+This webiste has been online for over a month. Because of the budget, I have to shut down live demo, sorry! 
+
 ## Implementation
 ### Architecture Design
 ![](https://i.imgur.com/Ai8ZfdA.png)
